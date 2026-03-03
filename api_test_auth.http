@@ -1,0 +1,239 @@
+@baseUrl = http://localhost:8008
+@taskId = 1
+@projectId = 1
+@labelId = 1
+@reminderId = 1
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3NzA0ODg2NjB9.km-qMVwRSK-mrC_QTMa8a_lqTZTIJRXJuM-Rk7VlU8w
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Root
+GET {{baseUrl}}/
+
+### ========== AUTHENTICATION ==========
+
+# Google login (opens browser)
+GET {{baseUrl}}/auth/google/login
+
+# After login, copy the access_token from response and update @token variable above
+
+### ========== PROJECTS (Requires Authentication) ==========
+
+# Create project first (needed for tasks)
+POST {{baseUrl}}/projects
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "My First Project",
+  "description": "A sample project for testing"
+}
+
+### Get all projects
+GET {{baseUrl}}/projects
+Authorization: Bearer {{token}}
+
+### Get project by ID
+GET {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{token}}
+
+### Update project
+PUT {{baseUrl}}/projects/{{projectId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Updated Project Name",
+  "description": "Updated description"
+}
+
+### Delete project
+# DELETE {{baseUrl}}/projects/{{projectId}}
+# Authorization: Bearer {{token}}
+
+### ========== LABELS (Requires Authentication) ==========
+
+# Create label (needed for task-label operations)
+POST {{baseUrl}}/labels
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "High Priority",
+  "color": "#ff0000"
+}
+
+### Create another label
+POST {{baseUrl}}/labels
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Bug Fix",
+  "color": "#ff6600"
+}
+
+### Get all labels
+GET {{baseUrl}}/labels
+Authorization: Bearer {{token}}
+
+### Get label by ID
+GET {{baseUrl}}/labels/{{labelId}}
+Authorization: Bearer {{token}}
+
+### Update label
+PUT {{baseUrl}}/labels/{{labelId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Critical Priority",
+  "color": "#cc0000"
+}
+
+### Delete label
+# DELETE {{baseUrl}}/labels/{{labelId}}
+# Authorization: Bearer {{token}}
+
+### ========== TASKS (Requires Authentication) ==========
+
+# Create task
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Implement user authentication",
+  "description": "Add OAuth2 authentication with Google",
+  "priority": 1,
+  "project_id": 1,
+  "due_date": "2024-12-31T23:59:59"
+}
+
+### Create another task
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Fix database connection",
+  "description": "Resolve connection timeout issues",
+  "priority": 2,
+  "project_id": 1
+}
+
+### Get all tasks
+GET {{baseUrl}}/tasks
+Authorization: Bearer {{token}}
+
+### Get task by ID
+GET {{baseUrl}}/tasks/{{taskId}}
+Authorization: Bearer {{token}}
+
+### Update task
+PUT {{baseUrl}}/tasks/{{taskId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Implement OAuth2 authentication",
+  "description": "Add Google OAuth2 authentication with proper error handling",
+  "completed": false,
+  "priority": 1
+}
+
+### Mark task as completed
+PUT {{baseUrl}}/tasks/{{taskId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "completed": true
+}
+
+### ========== TASK-LABEL OPERATIONS (Requires Authentication) ==========
+
+# Attach label to task
+POST {{baseUrl}}/tasks/{{taskId}}/labels/{{labelId}}
+Authorization: Bearer {{token}}
+
+### Attach another label to task
+POST {{baseUrl}}/tasks/{{taskId}}/labels/2
+Authorization: Bearer {{token}}
+
+### Get labels of a task
+GET {{baseUrl}}/tasks/{{taskId}}/labels
+Authorization: Bearer {{token}}
+
+### Detach label from task
+DELETE {{baseUrl}}/tasks/{{taskId}}/labels/{{labelId}}
+Authorization: Bearer {{token}}
+
+### ========== REMINDERS (Requires Authentication) ==========
+
+# Create reminder
+POST {{baseUrl}}/reminders
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "task_id": 1,
+  "remind_at": "2024-12-30T09:00:00"
+}
+
+### Create another reminder
+POST {{baseUrl}}/reminders
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "task_id": 1,
+  "remind_at": "2024-12-31T08:00:00"
+}
+
+### Get all reminders
+GET {{baseUrl}}/reminders
+Authorization: Bearer {{token}}
+
+### Get reminder by ID
+GET {{baseUrl}}/reminders/{{reminderId}}
+Authorization: Bearer {{token}}
+
+### Update reminder
+PUT {{baseUrl}}/reminders/{{reminderId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "remind_at": "2024-12-30T10:00:00",
+  "sent": false
+}
+
+### Delete reminder
+# DELETE {{baseUrl}}/reminders/{{reminderId}}
+# Authorization: Bearer {{token}}
+
+### ========== CLEANUP (Uncomment to delete) ==========
+
+# Delete task
+# DELETE {{baseUrl}}/tasks/{{taskId}}
+# Authorization: Bearer {{token}}
+
+# Delete project
+# DELETE {{baseUrl}}/projects/{{projectId}}
+# Authorization: Bearer {{token}}
+
+### ========== TESTING WITHOUT AUTH (Should return 401) ==========
+
+# Try to access tasks without token (should fail)
+GET {{baseUrl}}/tasks
+
+# Try to create project without token (should fail)
+POST {{baseUrl}}/projects
+Content-Type: application/json
+
+{
+  "name": "Unauthorized Project",
+  "description": "This should fail"
+}

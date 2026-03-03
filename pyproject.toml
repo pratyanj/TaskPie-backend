@@ -1,0 +1,25 @@
+[project]
+name = "todo"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "alembic>=1.16.5",
+    "apscheduler>=3.11.1",
+    "asyncpg>=0.31.0",
+    "authlib>=1.6.6",
+    "bcrypt<4.0.0",
+    "fastapi>=0.124.4",
+    "httpx>=0.28.1",
+    "itsdangerous>=2.2.0",
+    "passlib>=1.7.4",
+    "psycopg2>=2.9.11",
+    "psycopg2-binary>=2.9.11",
+    "pydantic[email]>=2.12.5",
+    "pyjwt>=2.10.1",
+    "python-decouple>=3.8",
+    "requests>=2.32.5",
+    "sqlmodel>=0.0.27",
+    "uvicorn>=0.38.0",
+]

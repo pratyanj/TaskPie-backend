@@ -1,0 +1,278 @@
+@baseUrl = http://localhost:8008
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo0LCJleHAiOjE3NzIzNjQ3MDR9.ry1pIoaQI9yHs8CML6GxxLjiY8ZB67Oo9seKPMMWaxg
+@refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3NzI5NjQxNzgsInR5cGUiOiJyZWZyZXNoIn0.a3GFvJek5Q73TSXO4DHkkRchDdIYYlDFZXQRo81Ly50
+
+@projectId = 1
+@labelId = 1
+@taskId = 1
+@reminderId = 1
+@userId = 1
+
+### ==================== HEALTH & ROOT ====================
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Root
+GET {{baseUrl}}/
+
+### ==================== AUTHENTICATION ====================
+
+### Google login (opens browser)
+GET {{baseUrl}}/auth/google/login
+
+### Google Callback (Requires code from redirect)
+GET {{baseUrl}}/auth/google/callback?code=YOUR_CODE_HERE
+
+### Signup Email/Password
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "name": "Test User",
+  "password": "Password123!"
+}
+
+### Login Email/Password
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "Password123!"
+}
+
+### Refresh Token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+### ==================== PROJECTS ====================
+
+### Create Project
+POST {{baseUrl}}/projects
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "My First Project",
+  "description": "A sample project for testing"
+}
+
+### Get All Projects
+GET {{baseUrl}}/projects
+Authorization: Bearer {{token}}
+
+### Get Project By ID
+GET {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{token}}
+
+### Update Project
+PUT {{baseUrl}}/projects/{{projectId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Updated Project Name",
+  "description": "Updated project description"
+}
+
+### Delete Project
+DELETE {{baseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{token}}
+
+### ==================== LABELS ====================
+
+### Create Label
+POST {{baseUrl}}/labels
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "High Priority",
+  "color": "#ff0000"
+}
+
+### Get All Labels
+GET {{baseUrl}}/labels
+Authorization: Bearer {{token}}
+
+### Get Label By ID
+GET {{baseUrl}}/labels/{{labelId}}
+Authorization: Bearer {{token}}
+
+### Update Label
+PUT {{baseUrl}}/labels/{{labelId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Critical",
+  "color": "#cc0000"
+}
+
+### Delete Label
+DELETE {{baseUrl}}/labels/{{labelId}}
+Authorization: Bearer {{token}}
+
+### ==================== TASKS ====================
+
+### Create Task
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Implement new feature",
+  "description": "Add new API endpoints for testing",
+  "priority": 1,
+  "project_id": {{projectId}},
+  "due_date": "2024-12-31T23:59:59"
+}
+
+### Get All Tasks
+GET {{baseUrl}}/tasks
+Authorization: Bearer {{token}}
+
+### Get Task By ID
+GET {{baseUrl}}/tasks/{{taskId}}
+Authorization: Bearer {{token}}
+
+### Update Task
+PUT {{baseUrl}}/tasks/{{taskId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Implement new feature - Updated",
+  "description": "Update the API testing",
+  "priority": 2
+}
+
+### Mark Task as Completed
+PATCH {{baseUrl}}/tasks/{{taskId}}/complete
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "completed": true
+}
+
+### Delete Task
+DELETE {{baseUrl}}/tasks/{{taskId}}
+Authorization: Bearer {{token}}
+
+### ==================== TASK - LABELS ====================
+
+### Attach Label to Task
+POST {{baseUrl}}/tasks/{{taskId}}/labels/{{labelId}}
+Authorization: Bearer {{token}}
+
+### Get Labels of a Task
+GET {{baseUrl}}/tasks/{{taskId}}/labels
+Authorization: Bearer {{token}}
+
+### Detach Label from Task
+DELETE {{baseUrl}}/tasks/{{taskId}}/labels/{{labelId}}
+Authorization: Bearer {{token}}
+
+### ==================== TASK - ASSIGNEES ====================
+
+### Assign User to Task
+POST {{baseUrl}}/tasks/{{taskId}}/assignees/{{userId}}
+Authorization: Bearer {{token}}
+
+### Get Assignees of a Task
+GET {{baseUrl}}/tasks/{{taskId}}/assignees
+Authorization: Bearer {{token}}
+
+### Remove Assignee from Task
+DELETE {{baseUrl}}/tasks/{{taskId}}/assignees/{{userId}}
+Authorization: Bearer {{token}}
+
+### ==================== REMINDERS ====================
+
+### Create Reminder (Standard Route)
+POST {{baseUrl}}/reminders
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "task_id": {{taskId}},
+  "remind_at": "2024-12-30T09:00:00"
+}
+
+### Create Reminder (Task Route)
+POST {{baseUrl}}/reminders/tasks/{{taskId}}/reminder
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "task_id": {{taskId}},
+  "remind_at": "2024-12-30T10:00:00"
+}
+
+### Get All Reminders
+GET {{baseUrl}}/reminders
+Authorization: Bearer {{token}}
+
+### Get Reminder By ID
+GET {{baseUrl}}/reminders/{{reminderId}}
+Authorization: Bearer {{token}}
+
+### Update Reminder
+PUT {{baseUrl}}/reminders/{{reminderId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "remind_at": "2024-12-31T09:00:00",
+  "sent": false
+}
+
+### Delete Reminder
+DELETE {{baseUrl}}/reminders/{{reminderId}}
+Authorization: Bearer {{token}}
+
+### ==================== ACTIVITY & LOGS ====================
+
+### Get User Activity Feed
+GET {{baseUrl}}/activity/user/feed?limit=20
+Authorization: Bearer {{token}}
+
+### Get Project Activity Logs
+GET {{baseUrl}}/activity/project/{{projectId}}?limit=50&offset=0
+Authorization: Bearer {{token}}
+
+### Get Task Activity Logs
+GET {{baseUrl}}/activity/task/{{taskId}}
+Authorization: Bearer {{token}}
+
+### Get HTTP Request Logs (Security Audit)
+GET {{baseUrl}}/activity/http-logs?limit=50
+Authorization: Bearer {{token}}
+
+### Get User HTTP Logs
+GET {{baseUrl}}/activity/http-logs/user/{{userId}}?limit=50
+Authorization: Bearer {{token}}
+
+### Get User Activity Stats
+GET {{baseUrl}}/activity/stats
+Authorization: Bearer {{token}}
+
+### ==================== REALTIME ====================
+
+### WebSocket (Note: HTTP clients may not fully support WS via .http without a plugin, but listing for reference)
+// WS {{baseUrl}}/ws?token={{token}}

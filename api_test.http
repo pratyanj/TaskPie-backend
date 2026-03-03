@@ -1,0 +1,187 @@
+@baseUrl = http://localhost:8008
+@taskId = 1
+@projectId = 1
+@labelId = 1
+@reminderId = 1
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Root
+GET {{baseUrl}}/
+
+### ========== PROJECTS ==========
+
+# Create project first (needed for tasks)
+POST {{baseUrl}}/projects
+Content-Type: application/json
+
+{
+  "name": "My First Project",
+  "description": "A sample project for testing"
+}
+
+### Get all projects
+GET {{baseUrl}}/projects
+
+### Get project by ID
+GET {{baseUrl}}/projects/{{projectId}}
+
+### Delete project
+# DELETE {{baseUrl}}/projects/{{projectId}}
+
+### ========== LABELS ==========
+
+# Create label (needed for task-label operations)
+POST {{baseUrl}}/labels
+Content-Type: application/json
+
+{
+  "name": "High Priority",
+  "color": "#ff0000"
+}
+
+### Create another label
+POST {{baseUrl}}/labels
+Content-Type: application/json
+
+{
+  "name": "Bug Fix",
+  "color": "#ff6600"
+}
+
+### Get all labels
+GET {{baseUrl}}/labels
+
+### Get label by ID
+GET {{baseUrl}}/labels/{{labelId}}
+
+### Update label
+PUT {{baseUrl}}/labels/{{labelId}}
+Content-Type: application/json
+
+{
+  "name": "Critical Priority",
+  "color": "#cc0000"
+}
+
+### Delete label
+# DELETE {{baseUrl}}/labels/{{labelId}}
+
+### ========== TASKS ==========
+
+# Create task
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+
+{
+  "title": "Implement user authentication",
+  "description": "Add OAuth2 authentication with Google",
+  "priority": 1,
+  "project_id": 1,
+  "due_date": "2024-12-31T23:59:59"
+}
+
+### Create another task
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+
+{
+  "title": "Fix database connection",
+  "description": "Resolve connection timeout issues",
+  "priority": 2,
+  "project_id": 1
+}
+
+### Get all tasks
+GET {{baseUrl}}/tasks
+
+### Get task by ID
+GET {{baseUrl}}/tasks/{{taskId}}
+
+### Update task
+PUT {{baseUrl}}/tasks/{{taskId}}
+Content-Type: application/json
+
+{
+  "title": "Implement OAuth2 authentication",
+  "description": "Add Google OAuth2 authentication with proper error handling",
+  "completed": false,
+  "priority": 1
+}
+
+### Mark task as completed
+PUT {{baseUrl}}/tasks/{{taskId}}
+Content-Type: application/json
+
+{
+  "completed": true
+}
+
+### ========== TASK-LABEL OPERATIONS ==========
+
+# Attach label to task
+POST {{baseUrl}}/tasks/{{taskId}}/labels/{{labelId}}
+
+### Attach another label to task
+POST {{baseUrl}}/tasks/{{taskId}}/labels/2
+
+### Get labels of a task
+GET {{baseUrl}}/tasks/{{taskId}}/labels
+
+### Detach label from task
+DELETE {{baseUrl}}/tasks/{{taskId}}/labels/{{labelId}}
+
+### ========== REMINDERS ==========
+
+# Create reminder
+POST {{baseUrl}}/reminders
+Content-Type: application/json
+
+{
+  "task_id": 1,
+  "remind_at": "2024-12-30T09:00:00"
+}
+
+### Create another reminder
+POST {{baseUrl}}/reminders
+Content-Type: application/json
+
+{
+  "task_id": 1,
+  "remind_at": "2024-12-31T08:00:00"
+}
+
+### Get all reminders
+GET {{baseUrl}}/reminders
+
+### Get reminder by ID
+GET {{baseUrl}}/reminders/{{reminderId}}
+
+### Update reminder
+PUT {{baseUrl}}/reminders/{{reminderId}}
+Content-Type: application/json
+
+{
+  "remind_at": "2024-12-30T10:00:00",
+  "sent": false
+}
+
+### Delete reminder
+# DELETE {{baseUrl}}/reminders/{{reminderId}}
+
+### ========== CLEANUP (Uncomment to delete) ==========
+
+# Delete task
+# DELETE {{baseUrl}}/tasks/{{taskId}}
+
+# Delete project
+# DELETE {{baseUrl}}/projects/{{projectId}}
+
+### ========== AUTHENTICATION (Future) ==========
+
+# Google login
+# GET {{baseUrl}}/auth/google/login
+
+# Google callback (handled by browser)
+# GET {{baseUrl}}/auth/google/callback
