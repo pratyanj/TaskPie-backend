@@ -1,9 +1,10 @@
 from sqlmodel import SQLModel, Field
 from typing import Optional
 from datetime import datetime
+from models.base_model import SoftDeleteMixin, TimestampMixin
 
 
-class TeamMember(SQLModel, table=True):
+class TeamMember(SoftDeleteMixin, TimestampMixin, table=True):
     __tablename__ = "team_member"
     id: Optional[int] = Field(default=None, primary_key=True)
     team_id: int = Field(foreign_key="team.id", index=True)

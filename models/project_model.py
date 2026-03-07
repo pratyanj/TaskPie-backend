@@ -1,12 +1,12 @@
 from sqlmodel import SQLModel, Field
 from typing import Optional
 from datetime import datetime
+from models.base_model import SoftDeleteMixin, TimestampMixin
 
-class Project(SQLModel, table=True):
+class Project(SoftDeleteMixin, TimestampMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     description: Optional[str] = None
     color: Optional[str] = Field(default="#6366F1")   # Hex accent colour
     icon: Optional[str] = Field(default="folder")      # MaterialIcons name
-    owner_id: int = Field(foreign_key="user.id")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    owner_id: Optional[int] = Field(default=None, foreign_key="user.id")
