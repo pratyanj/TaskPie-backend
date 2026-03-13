@@ -1,393 +1,213 @@
 # TaskUp - Task Management API
 
-A comprehensive task management system built with FastAPI, SQLModel, and PostgreSQL. This project provides a RESTful API for managing tasks, projects, labels, and reminders with Google OAuth2 authentication.
+TaskUp is a FastAPI + SQLModel backend for tasks, projects, teams, and collaboration. It supports Google OAuth2, email/password auth, Kanban columns, task comments with reactions and mentions, subtasks, reminders, activity logs, and a WebSocket channel.
 
-## 🏗️ Project Architecture
+## Project Structure
 
 ```
 TaskUp/
-├── 📁 alembic/              # Database migrations
-├── 📁 auth/                 # Authentication modules
-├── 📁 dependencies/         # FastAPI dependencies
-├── 📁 doc/                  # Documentation
-├── 📁 models/               # SQLModel database models
-├── 📁 routers/              # API route handlers
-├── 📁 schemas/              # Pydantic validation schemas
-├── 📁 services/             # Background services
-├── 📄 database.py           # Database configuration
-├── 📄 main.py               # FastAPI application entry point
-├── 📄 api_test.http         # API testing file
-└── 📄 .env                  # Environment variables
+  alembic/              # Database migrations
+  auth/                 # Authentication modules
+  constants/            # Enums and action constants
+  core/                 # Configuration
+  dependencies/         # FastAPI dependencies
+  docs/                 # Documentation
+  middleware/           # Custom middlewares
+  models/               # SQLModel database models
+  routers/              # API route handlers
+  schemas/              # Pydantic validation schemas
+  services/             # Background services + websockets manager
+  database.py           # Database configuration
+  main.py               # FastAPI application entry point
+  api_test.http         # API testing file
+  .env                  # Environment variables
 ```
 
-## 🚀 Features
+## Features
 
-- **Task Management**: Create, read, update, delete tasks with priorities and due dates
-- **Project Organization**: Group tasks into projects
-- **Label System**: Categorize tasks with colored labels
-- **Reminders**: Set time-based reminders for tasks
-- **Google OAuth2**: Secure authentication with Google
-- **Custom Auth**: Internal email/password login and signup support
-- **Password Security**: Bcrypt-based one-way password hashing
-- **Health Monitoring**: Built-in health check endpoints
-- **Database Migrations**: Alembic for schema management
+- Task CRUD with priorities, due dates, assignees, and completion.
+- Projects with automatic default Kanban columns.
+- Kanban columns for project boards and task movement.
+- Labels and reminders.
+- Task comments with emoji reactions and @mentions.
+- Subtasks (checklist items) per task.
+- Activity logs and HTTP request logs.
+- Teams, team members, and project-team linking.
+- Auth: Google OAuth2, email/password, JWT access + refresh tokens.
+- WebSocket endpoint for realtime events.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-- **Backend**: FastAPI (Python 3.9+)
-- **Database**: PostgreSQL with SQLModel ORM
-- **Authentication**: Google OAuth2 + Custom Email/Password
-- **Password Hashing**: Bcrypt with Passlib
-- **Migrations**: Alembic
-- **Package Management**: UV
-- **Environment**: Python-decouple
+- Backend: FastAPI (Python 3.9+)
+- ORM: SQLModel
+- Database: PostgreSQL
+- Auth: Google OAuth2 + email/password + JWT
+- Migrations: Alembic
+- Package manager: UV
+- Config: python-decouple
 
-## 📊 Database Schema
+## Quick Start
 
-```mermaid
-erDiagram
-    User ||--o{ Project : owns
-    User ||--o{ Task : owns
-    User ||--o{ Label : owns
-    Project ||--o{ Task : contains
-    Task ||--o{ Reminder : has
-    Task }o--o{ Label : tagged_with
-
-    User {
-        int id PK
-        string email
-        string name
-        string google_id
-        string hashed_password
-        datetime created_at
-    }
-
-    Project {
-        int id PK
-        string name
-        string description
-        int owner_id FK
-        datetime created_at
-    }
-
-    Task {
-        int id PK
-        string title
-        string description
-        boolean completed
-        int priority
-        datetime due_date
-        int owner_id FK
-        int project_id FK
-        datetime created_at
-    }
-
-    Label {
-        int id PK
-        string name
-        string color
-        int owner_id FK
-    }
-
-    Reminder {
-        int id PK
-        int task_id FK
-        datetime remind_at
-        boolean sent
-        datetime created_at
-    }
-
-    TaskLabel {
-        int task_id FK
-        int label_id FK
-    }
-```
-
-## 🔄 API Workflow
-
-### 1. Authentication Flows
-
-#### Google OAuth2 Flow
-```mermaid
-sequenceDiagram
-    participant Client
-    participant API
-    participant Google
-    participant Database
-
-    Client->>API: GET /auth/google/login
-    API->>Google: Redirect to Google OAuth
-    Google->>Client: Authorization Code
-    Client->>API: GET /auth/google/callback?code=...
-    API->>Google: Exchange code for tokens
-    Google->>API: User info + tokens
-    API->>Database: Create/Update user
-    API->>Client: JWT token + user data
-```
-
-#### Custom Email/Password Flow
-```mermaid
-sequenceDiagram
-    participant Client
-    participant API
-    participant Database
-
-    Note over Client,API: Signup
-    Client->>API: POST /auth/signup (email, name, password)
-    API->>API: Hash Password (Bcrypt)
-    API->>Database: Save User
-    API->>Client: Success Response
-
-    Note over Client,API: Login
-    Client->>API: POST /auth/login (email, password)
-    API->>Database: Fetch User by Email
-    API->>API: Verify Password Hash
-    API->>Client: JWT Access + Refresh Tokens
-```
-
-### 2. Task Management Flow
-```mermaid
-sequenceDiagram
-    participant Client
-    participant API
-    participant Database
-
-    Note over Client,Database: Create Project First
-    Client->>API: POST /projects
-    API->>Database: Insert project
-    Database->>API: Project created
-    API->>Client: Project data
-
-    Note over Client,Database: Create Task
-    Client->>API: POST /tasks
-    API->>Database: Insert task with project_id
-    Database->>API: Task created
-    API->>Client: Task data
-
-    Note over Client,Database: Add Labels
-    Client->>API: POST /tasks/{id}/labels/{label_id}
-    API->>Database: Create task-label relationship
-    API->>Client: Success response
-```
-
-### 3. Complete CRUD Operations
-```mermaid
-flowchart TD
-    A[Client Request] --> B{Authentication}
-    B -->|Valid| C[Route Handler]
-    B -->|Invalid| D[401 Unauthorized]
-    
-    C --> E{Operation Type}
-    E -->|CREATE| F[Validate Schema]
-    E -->|READ| G[Query Database]
-    E -->|UPDATE| H[Find & Update]
-    E -->|DELETE| I[Find & Delete]
-    
-    F --> J[Insert to DB]
-    G --> K[Return Data]
-    H --> L[Update DB]
-    I --> M[Remove from DB]
-    
-    J --> N[Return Created]
-    K --> O[Return Found]
-    L --> P[Return Updated]
-    M --> Q[Return Success]
-```
-
-## 🚦 API Endpoints
-
-### Core Endpoints
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Health check with DB status |
-| GET | `/` | Welcome message |
-
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/auth/google/login` | Initiate Google OAuth redirect |
-| GET | `/auth/google/callback` | Google OAuth callback handler |
-| POST | `/auth/signup` | Register a new user with email/password |
-| POST | `/auth/login` | Login with email/password |
-| POST | `/auth/refresh` | Refresh expired access tokens |
-| POST | `/auth/logout` | Invalidate session / refresh token |
-
-### Tasks
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/tasks` | List all tasks |
-| POST | `/tasks` | Create new task |
-| GET | `/tasks/{id}` | Get task by ID |
-| PUT | `/tasks/{id}` | Update task |
-| DELETE | `/tasks/{id}` | Delete task |
-| POST | `/tasks/{id}/labels/{label_id}` | Attach label to task |
-| DELETE | `/tasks/{id}/labels/{label_id}` | Detach label from task |
-| GET | `/tasks/{id}/labels` | Get task labels |
-
-### Projects
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/projects` | List all projects |
-| POST | `/projects` | Create new project |
-| GET | `/projects/{id}` | Get project by ID |
-| PUT | `/projects/{id}` | Update project |
-| DELETE | `/projects/{id}` | Delete project |
-
-### Labels & Reminders
-Similar CRUD patterns for `/labels` and `/reminders` endpoints.
-
-## 🔧 Setup Instructions
-
-### 1. Environment Setup
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd TaskUp
-
-# Install dependencies with UV
 uv sync
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your database and Google OAuth credentials
-```
-
-### 2. Database Setup
-```bash
-# Run migrations
+# create and edit .env (see sample below)
+# run migrations
 alembic upgrade head
 
-# Or create new migration
-alembic revision --autogenerate -m "description"
+# start server
+uvicorn main:app --reload --host 0.0.0.0 --port 8008
 ```
 
-### 3. Google OAuth Setup
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing
-3. Enable Google+ API
-4. Create OAuth2 credentials
-5. Add your credentials to `.env`
+### Sample .env
 
-### 4. Run the Application
-```bash
-# Development server
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-
-# Production
-uvicorn main:app --host 0.0.0.0 --port 8000
-```
-
-## 🧪 Testing
-
-Use the provided `api_test.http` file with your HTTP client:
-
-```http
-# Test health endpoint
-GET http://localhost:8000/health
-
-# Create a project
-POST http://localhost:8000/projects
-Content-Type: application/json
-
-{
-  "name": "My Project",
-  "description": "Project description"
-}
-```
-
-## 📝 Development Workflow
-
-### 1. Adding New Features
-```mermaid
-flowchart LR
-    A[Create Model] --> B[Create Schema]
-    B --> C[Create Router]
-    C --> D[Add to main.py]
-    D --> E[Create Migration]
-    E --> F[Test API]
-    F --> G[Update Documentation]
-```
-
-### 2. Database Changes
-```bash
-# 1. Modify models in models/
-# 2. Generate migration
-alembic revision --autogenerate -m "add new field"
-# 3. Review migration file
-# 4. Apply migration
-alembic upgrade head
-```
-
-### 3. Git Workflow
-```bash
-# Feature development
-git checkout -b feature/new-feature
-git add .
-git commit -m "feat: add new feature"
-git push origin feature/new-feature
-
-# Create pull request for review
-```
-
-## 🔒 Security Considerations
-
-- Environment variables for sensitive data
-- Google OAuth2 & Bcrypt password hashing
-- JWT (JSON Web Tokens) with rotation for session security
-- Input validation with Pydantic schemas
-- SQL injection prevention with SQLModel
-- CORS configuration for production
-
-## 📈 Performance Optimization
-
-- Database indexing on frequently queried fields
-- Connection pooling with SQLAlchemy
-- Async/await for database operations
-- Response caching for static data
-
-## 🚀 Deployment
-
-### Docker Deployment
-```dockerfile
-FROM python:3.9-slim
-WORKDIR /app
-COPY . .
-RUN pip install uv && uv sync
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
-
-### Environment Variables
 ```env
-DATABASE_URL=postgresql://user:pass@host:port/db
+DB_NAME=taskpy
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_HOST=localhost
+DB_PORT=5432
+
+SECRET_KEY=change_me
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=15
+REFRESH_TOKEN_EXPIRE_DAYS=7
+
 GOOGLE_CLIENT_ID=your_client_id
 GOOGLE_CLIENT_SECRET=your_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:8008/auth/google/callback
+GOOGLE_TOKEN_URL=https://oauth2.googleapis.com/token
+GOOGLE_USERINFO_URL=https://www.googleapis.com/oauth2/v2/userinfo
 ```
 
-## 👥 Team Collaboration
+## API Overview
 
-### Code Review Checklist
-- [ ] Models follow naming conventions
-- [ ] Schemas validate all inputs
-- [ ] Error handling implemented
-- [ ] Tests added for new features
-- [ ] Documentation updated
-- [ ] Migration files reviewed
+Core
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Welcome message |
+| GET | `/health` | Health check with DB status |
 
-### Development Standards
-- Use conventional commit messages
-- Follow PEP 8 style guidelines
-- Add type hints to all functions
-- Write docstrings for complex functions
-- Test all API endpoints
+Auth
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/auth/google/login` | Start Google OAuth flow |
+| GET | `/auth/google/callback` | OAuth callback handler |
+| POST | `/auth/signup` | Email/password signup |
+| POST | `/auth/login` | Email/password login |
+| POST | `/auth/refresh` | Refresh JWTs |
+| POST | `/auth/logout` | Revoke refresh token |
+| GET | `/auth/me` | Current user |
+| PUT | `/auth/me` | Update current user |
 
-## 📞 Support
+Tasks
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/tasks` | List tasks (filters: `project_id`, `priority`, `assigned_to`, `search`, `column_id`) |
+| POST | `/tasks` | Create task |
+| GET | `/tasks/{task_id}` | Get task |
+| PUT | `/tasks/{task_id}` | Update task |
+| DELETE | `/tasks/{task_id}` | Delete task |
+| PATCH | `/tasks/{task_id}/complete` | Mark task completed |
+| POST | `/tasks/{task_id}/assignees/{user_id}` | Add assignee |
+| DELETE | `/tasks/{task_id}/assignees/{user_id}` | Remove assignee |
+| GET | `/tasks/{task_id}/assignees` | List assignees |
+| POST | `/tasks/{task_id}/labels/{label_id}` | Attach label |
+| DELETE | `/tasks/{task_id}/labels/{label_id}` | Detach label |
+| GET | `/tasks/{task_id}/labels` | List task labels |
 
-For questions or issues:
-1. Check existing documentation
-2. Review API test file for examples
-3. Check database migrations
-4. Contact team lead for architecture decisions
+Comments and Mentions
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/tasks/{task_id}/comments` | List comments |
+| POST | `/tasks/{task_id}/comments` | Add comment |
+| PATCH | `/tasks/{task_id}/comments/{comment_id}` | Edit comment |
+| DELETE | `/tasks/{task_id}/comments/{comment_id}` | Delete comment |
+| POST | `/tasks/{task_id}/comments/{comment_id}/react` | Toggle reaction |
+| GET | `/comments/mentions/me` | Unread mentions |
+| PATCH | `/comments/mentions/{mention_id}/read` | Mark mention read |
+| GET | `/tasks/{task_id}/timeline` | Comment + activity timeline |
+| GET | `/tasks/{task_id}/comment-count` | Comment count |
 
----
+Subtasks
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/tasks/{task_id}/subtasks` | List subtasks |
+| POST | `/tasks/{task_id}/subtasks` | Create subtask |
+| PATCH | `/tasks/{task_id}/subtasks/{sub_id}/toggle` | Toggle completion |
+| PATCH | `/tasks/{task_id}/subtasks/{sub_id}` | Edit subtask |
+| DELETE | `/tasks/{task_id}/subtasks/{sub_id}` | Delete subtask |
 
-**Built with ❤️ using FastAPI and modern Python tools**
+Projects
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/projects` | List projects |
+| POST | `/projects` | Create project |
+| GET | `/projects/{project_id}` | Get project |
+| PUT | `/projects/{project_id}` | Update project |
+| DELETE | `/projects/{project_id}` | Delete project |
+| GET | `/projects/{project_id}/teams` | Teams linked to project |
+| GET | `/projects/{project_id}/members` | Members across linked teams |
+
+Kanban Columns
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/columns/project/{project_id}` | List columns |
+| POST | `/columns/project/{project_id}` | Create column |
+| PATCH | `/columns/{column_id}` | Update column |
+| PATCH | `/columns/{column_id}/reorder` | Reorder column |
+| DELETE | `/columns/{column_id}` | Delete column |
+| PATCH | `/columns/move-task/{task_id}` | Move task to column |
+
+Labels and Reminders
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/labels` | List labels |
+| POST | `/labels` | Create label |
+| GET | `/labels/{label_id}` | Get label |
+| PUT | `/labels/{label_id}` | Update label |
+| DELETE | `/labels/{label_id}` | Delete label |
+| GET | `/reminders` | List reminders |
+| POST | `/reminders` | Create reminder |
+| GET | `/reminders/{reminder_id}` | Get reminder |
+| PUT | `/reminders/{reminder_id}` | Update reminder |
+| DELETE | `/reminders/{reminder_id}` | Delete reminder |
+| POST | `/reminders/tasks/{task_id}/reminder` | Create reminder for task |
+
+Activity
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/activity/project/{project_id}` | Project activity logs |
+| GET | `/activity/task/{task_id}` | Task activity logs |
+| GET | `/activity/user/feed` | User activity feed |
+| GET | `/activity/http-logs` | HTTP request logs |
+| GET | `/activity/http-logs/user/{user_id}` | User HTTP logs |
+| GET | `/activity/stats` | Activity stats |
+
+Teams
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/teams` | List my teams |
+| POST | `/teams` | Create team |
+| GET | `/teams/{team_id}` | Team detail with members |
+| PUT | `/teams/{team_id}` | Update team |
+| DELETE | `/teams/{team_id}` | Delete team |
+| POST | `/teams/join` | Join team by invite code |
+| DELETE | `/teams/{team_id}/leave` | Leave team |
+| GET | `/teams/{team_id}/members` | List team members |
+| DELETE | `/teams/{team_id}/members/{user_id}` | Remove member |
+| PATCH | `/teams/{team_id}/members/{user_id}/promote` | Promote member |
+| POST | `/teams/{team_id}/projects/{project_id}` | Link project to team |
+| DELETE | `/teams/{team_id}/projects/{project_id}` | Unlink project |
+| GET | `/teams/{team_id}/projects` | List team's projects |
+| PATCH | `/teams/{team_id}/tasks/{task_id}/assign` | Assign task within team |
+
+Realtime
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| WS | `/ws?token=JWT` | WebSocket connection |
+
+## Notes
+
+- All protected endpoints expect a Bearer JWT in the `Authorization` header.
+- The default port used by `main.py` is `8008`.
