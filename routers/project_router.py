@@ -10,6 +10,7 @@ from models.project_team_model import ProjectTeam
 from models.team_model import Team
 from models.team_member_model import TeamMember
 from schemas.team_schema import TeamRead, TeamMemberRead
+from routers.kanban_router import create_default_columns
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
@@ -23,6 +24,8 @@ def create_project(
     session.add(db_project)
     session.commit()
     session.refresh(db_project)
+    # Auto-create 4 default Kanban columns for the new project
+    create_default_columns(db_project.id, session)
     return db_project
 
 

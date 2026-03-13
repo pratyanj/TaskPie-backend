@@ -7,6 +7,9 @@ from routers.reminder_router import router as reminder_router
 from routers.auth_router import router as auth_router
 from routers.activity_router import router as activity_router
 from routers.team_router import router as team_router
+from routers.kanban_router import router as kanban_router
+from routers.comment_router import router as comment_router, mentions_router
+from routers.subtask_router import router as subtask_router
 
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -75,6 +78,10 @@ app.include_router(reminder_router)
 app.include_router(auth_router)
 app.include_router(activity_router)
 app.include_router(team_router)
+app.include_router(kanban_router)
+app.include_router(comment_router)
+app.include_router(mentions_router)
+app.include_router(subtask_router)
 
 start_scheduler() 
 

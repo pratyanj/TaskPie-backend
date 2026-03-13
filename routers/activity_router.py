@@ -65,16 +65,18 @@ def get_task_activity(
 
 @router.get("/user/feed")
 def get_user_activity_feed(
-    limit: int = Query(20, le=100, description="Maximum number of logs to return"),
+    limit: int = Query(50, le=200, description="Maximum number of logs to return"),
     action: Optional[str] = Query(None, description="Filter by action type"),
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     """
-    Get activity feed for the current user.
-    
-    Shows all activities performed by the user across all projects and tasks.
+    Get enriched activity feed for the current user.
+    Includes task title, project name, details and extra_data for rich UI display.
     """
+    from models.task_model import Task
+    from models.project_model import Project
+
     query = select(ActivityLog).where(ActivityLog.user_id == current_user.id)
     
     if action:
@@ -84,13 +86,40 @@ def get_user_activity_feed(
         query.order_by(ActivityLog.created_at.desc()).limit(limit)
     ).all()
     
+    enriched = []
+    for log in logs:
+        task_title = None
+        project_name = None
+
+        if log.task_id:
+            task = session.get(Task, log.task_id)
+            if task:
+                task_title = task.title
+
+        if log.project_id:
+            project = session.get(Project, log.project_id)
+            if project:
+                project_name = project.name
+
+        enriched.append({
+            "id": log.id,
+            "action": log.action,
+            "details": log.details,
+            "extra_data": log.extra_data,   # raw JSON string
+            "task_id": log.task_id,
+            "project_id": log.project_id,
+            "task_title": task_title,
+            "project_name": project_name,
+            "created_at": log.created_at.isoformat(),
+        })
+
     return {
-        "logs": logs,
-        "total": len(logs),
+        "logs": enriched,
+        "total": len(enriched),
         "user": {
             "id": current_user.id,
             "email": current_user.email,
-            "name": current_user.name
+            "name": current_user.name,
         }
     }
 

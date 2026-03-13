@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
+from typing import Optional
 
 from database import get_session
 from schemas.task_schema import TaskCreate, TaskUpdate, TaskRead
@@ -46,9 +47,25 @@ def create_task(
 @router.get("/", response_model=list[Task])
 def get_tasks(
     current_user: User = Depends(get_current_user),
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    project_id: Optional[int] = None,
+    priority: Optional[int] = None,
+    assigned_to: Optional[int] = None,
+    search: Optional[str] = None,
+    column_id: Optional[int] = None,
 ):
-    return session.exec(select(Task).where(Task.owner_id == current_user.id)).all()
+    query = select(Task).where(Task.owner_id == current_user.id, Task.is_deleted == False)
+    if project_id is not None:
+        query = query.where(Task.project_id == project_id)
+    if priority is not None:
+        query = query.where(Task.priority == priority)
+    if assigned_to is not None:
+        query = query.where(Task.assigned_to == assigned_to)
+    if column_id is not None:
+        query = query.where(Task.column_id == column_id)
+    if search:
+        query = query.where(Task.title.ilike(f"%{search}%"))
+    return session.exec(query).all()
 
 
 # READ ONE

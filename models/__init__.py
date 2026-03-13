@@ -1,4 +1,4 @@
-from .task_model import Task, TaskAssignee, TaskLabel
+from .task_model import Task, TaskLabel, TaskAssignee, TaskComment, CommentReaction, CommentMention, Subtask
 from .project_model import Project
 from .user_model import User
 from .refresh_token_model import RefreshToken
@@ -9,6 +9,7 @@ from .reminder_model import Reminder
 from .team_model import Team
 from .team_member_model import TeamMember
 from .project_team_model import ProjectTeam
+from .kanban_column_model import KanbanColumn
 
 __all__ = [
     "ActivityLog",
@@ -24,4 +25,9 @@ __all__ = [
     "Team",
     "TeamMember",
     "ProjectTeam",
+    "KanbanColumn",
+    "TaskComment",
+    "CommentReaction",
+    "CommentMention",
+    "Subtask",
 ]

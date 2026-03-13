@@ -9,6 +9,7 @@ class TaskCreate(SQLModel):
     due_date: Optional[datetime] = None
     project_id: Optional[int] = None
     assigned_to: Optional[int] = None
+    column_id: Optional[int] = None
 
 class TaskUpdate(SQLModel):
     title: Optional[str] = None
@@ -17,6 +18,7 @@ class TaskUpdate(SQLModel):
     priority: Optional[int] = None
     due_date: Optional[datetime] = None
     assigned_to: Optional[int] = None
+    column_id: Optional[int] = None
 
 class TaskRead(SQLModel):
     id: int
@@ -27,5 +29,6 @@ class TaskRead(SQLModel):
     due_date: Optional[datetime] = None
     project_id: Optional[int] = None
     assigned_to: Optional[int] = None
-    owner_id: int
+    owner_id: Optional[int] = None
+    column_id: Optional[int] = None
     created_at: datetime

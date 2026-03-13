@@ -24,3 +24,10 @@ class ActivityAction:
     LABEL_ATTACHED = "label_attached"
     LABEL_DETACHED = "label_detached"
     LABEL_DELETED = "label_deleted"
+
+    # Comment actions
+    COMMENT_ADDED = "comment_added"
+    COMMENT_DELETED = "comment_deleted"
+
+    # Column / board actions
+    TASK_MOVED = "task_moved"
