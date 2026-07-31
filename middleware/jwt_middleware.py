@@ -55,7 +55,7 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
                 if not user:
                     return JSONResponse({"detail": "User not found"}, status_code=401)
 
-                # Attach user to request
+                session.expunge(user)  # detach safely so user is usable after session closes
                 request.state.user = user
 
         except jwt.ExpiredSignatureError:

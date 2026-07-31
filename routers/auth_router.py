@@ -34,23 +34,28 @@ def update_me(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
+    # Re-fetch user within this session (current_user is detached from middleware session)
+    user = session.get(User, current_user.id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     if update_data.name:
-        current_user.name = update_data.name
+        user.name = update_data.name
     if update_data.email:
         # Avoid duplicate email check
         existing = session.exec(select(User).where(User.email == update_data.email)).first()
-        if existing and existing.id != current_user.id:
+        if existing and existing.id != user.id:
             raise HTTPException(400, "Email already in use")
-        current_user.email = update_data.email
+        user.email = update_data.email
         
-    session.add(current_user)
+    session.add(user)
     session.commit()
-    session.refresh(current_user)
+    session.refresh(user)
     
     return {
-        "id": current_user.id,
-        "email": current_user.email,
-        "name": current_user.name
+        "id": user.id,
+        "email": user.email,
+        "name": user.name
     }
 
 
@@ -111,15 +116,13 @@ def google_callback(code: str = Query(...)):
         session.add(db_token)
         session.commit()
 
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "user": {
-                "id": user.id,
-                "email": user.email,
-                "name": user.name
-            }
-        }
+        # Redirect to frontend app callback route with tokens
+        import os
+        from fastapi.responses import RedirectResponse
+        frontend_base = os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
+        return RedirectResponse(
+            url=f"{frontend_base}/auth/callback?access_token={access_token}&refresh_token={refresh_token}"
+        )
 
 
 @router.post("/signup")

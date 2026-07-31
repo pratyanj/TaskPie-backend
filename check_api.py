@@ -12,8 +12,9 @@ from models.team_model import Team
 from models.project_team_model import ProjectTeam
 from models.team_member_model import TeamMember
 from auth.security import get_password_hash
+from decouple import config
 
-BASE_URL = "http://127.0.0.1:8011"
+BASE_URL = config("BASE_URL")
 
 def main():
     print("=== TASKPIE API DIAGNOSTIC SCRIPT ===")
